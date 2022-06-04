@@ -1,22 +1,23 @@
 package com.mygdx.game.objects;
 
 import com.badlogic.gdx.physics.box2d.Body;
+import com.badlogic.gdx.physics.box2d.Fixture;
 
 public abstract class GameScript {
-	private GameObject _gameObject;
+	private GameObject gameObject;
 	public void init(GameObject gameObject) 
 	{
-		if (_gameObject == null)
-			_gameObject = gameObject;
+		if (this.gameObject == null)
+			this.gameObject = gameObject;
 		Start();
 	}
 	
 	public GameObject getGameObject() {
-		return _gameObject;
+		return gameObject;
 	}
 	
     public Body getBody() {
-		return _gameObject.getBody();
+		return gameObject.getBody();
 	}
 	
 	public void Start()
@@ -27,5 +28,20 @@ public abstract class GameScript {
     public void Update() 
     {
     	
+	}
+    
+    public void OnBeginContact(Fixture me, Fixture target) {
+    	
+	}
+    public void OnEndContact(Fixture me, Fixture target) {
+		
+	}
+    
+    
+    public void OnRemove() {
+		
+	}
+    public void OnDestory() {
+		
 	}
 }

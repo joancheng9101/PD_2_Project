@@ -1,36 +1,22 @@
 package com.mygdx.game.Screen;
 
-import java.util.ArrayList;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
-import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.graphics.Camera;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.maps.MapObject;
-import com.badlogic.gdx.maps.MapRenderer;
 import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
-import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.CircleShape;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
-import com.badlogic.gdx.scenes.scene2d.actions.AddAction;
-import com.badlogic.gdx.utils.viewport.FitViewport;
-import com.badlogic.gdx.utils.viewport.Viewport;
 import com.mygdx.game.MyGdxGame;
 import com.mygdx.game.Script.Player;
 import com.mygdx.game.objects.GameObject;
 import com.mygdx.game.objects.GameScreen;
-import com.mygdx.game.objects.GameScript;
 
 public class  PlayScreen extends GameScreen {
     private TmxMapLoader mapLoader;
@@ -54,7 +40,8 @@ public class  PlayScreen extends GameScreen {
         shape.setRadius(20/MyGdxGame.PPM);
         fdef.shape =shape;
         
-        player = new GameObject(bdef, fdef);
+        player = new GameObject("player", bdef);
+        player.addFixture(fdef);
         player.addscript(new Player());
 	}
 
