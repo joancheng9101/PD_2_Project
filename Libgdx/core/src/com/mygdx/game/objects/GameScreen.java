@@ -8,7 +8,6 @@ import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.maps.MapRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.Contact;
@@ -24,7 +23,6 @@ import com.mygdx.game.MyGdxGame;
 public abstract class GameScreen implements Screen {
     private Viewport gamePort;
     private OrthographicCamera gamecam;
-    protected MapRenderer renderer;
     private World world;
     private SpriteBatch batch;
     private Box2DDebugRenderer b2dr;
@@ -36,11 +34,6 @@ public abstract class GameScreen implements Screen {
     
     private float deltaTime = 0;
     
-    public MapRenderer getRenderer() 
-    {
-		return renderer;
-	}
-
     public World getWorld() 
     {
 		return world;
@@ -144,16 +137,16 @@ public abstract class GameScreen implements Screen {
 	}
     
     public GameObject getGameObject(String name) {
-    	for (GameObject gameObject : objectlist) {
-			if(gameObject.name == name) return gameObject;
+    	for (GameObject gameObject : new ArrayList<>(objectlist)) {
+			if(gameObject.name.equals(name)) return gameObject;
 		}
     	return null;
 	}
 
     public GameObject[] getGameObjects(String name) {
     	ArrayList<GameObject> scripts = new ArrayList<>();
-    	for (GameObject gameObject : objectlist) {
-    		if(gameObject.name == name) scripts.add(gameObject);
+    	for (GameObject gameObject : new ArrayList<>(objectlist)) {
+    		if(gameObject.name.equals(name)) scripts.add(gameObject);
 		}
     	GameObject[] ans = new GameObject[scripts.size()];
     	return scripts.toArray(ans);
@@ -166,18 +159,18 @@ public abstract class GameScreen implements Screen {
     	
     }
     public void update(){
-    	for (GameObject gameObject : objectlist) 
+    	for (GameObject gameObject : new ArrayList<>(objectlist)) 
     	{
     		gameObject.Update();
 		}
     	Update();
         world.step(1/60f,6,2);
-    	for (GameObject gameObject : objectlist) 
+    	for (GameObject gameObject : new ArrayList<>(objectlist)) 
     	{
     		gameObject.lateUpdate();
 		}
         lateUpdate();
-        for (GameObject gameObject : destroyobjectlist) 
+        for (GameObject gameObject : new ArrayList<>(destroyobjectlist)) 
     	{
     		gameObject.getTexture().dispose();
     		for(int i = 0; i < gameObject.getFixtureSize(); i++)
@@ -193,7 +186,16 @@ public abstract class GameScreen implements Screen {
         destroyobjectlist.clear();
         
         gamecam.update();
-        renderer.setView(gamecam);
+    }
+    
+    public void OnRenderMap()
+    {
+    	
+    }
+
+    public void OnRender(SpriteBatch batch)
+    {
+    	
     }
     
     @Override
@@ -202,14 +204,20 @@ public abstract class GameScreen implements Screen {
         update();
         Gdx.gl.glClearColor(0,0,0,1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        renderer.render();
+        
+        OnRenderMap();
         batch.begin();
-    	for (GameObject gameObject : objectlist) 
+    	for (GameObject gameObject : new ArrayList<>(objectlist)) 
     	{
     		gameObject.updateSpritePosition();
     		//batch.draw(gameObject, gameObject.getX(), gameObject.getY());
-    		gameObject.draw(batch);
+    		if(gameObject.getTexture() != null)
+    		{
+    			gameObject.draw(batch);
+    			gameObject.OnRender(batch);
+    		}
 		}
+        OnRender(batch);
     	batch.end();
         if(debugmode)
         {
@@ -244,7 +252,7 @@ public abstract class GameScreen implements Screen {
         world.dispose();
         objectlist.clear();
         batch.dispose();
-        for (GameObject gameObject : objectlist) 
+        for (GameObject gameObject : new ArrayList<>(objectlist)) 
     	{
     		gameObject.getTexture().dispose();
     		for(int i = 0; i < gameObject.getFixtureSize(); i++)

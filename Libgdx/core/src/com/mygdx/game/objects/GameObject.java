@@ -8,6 +8,7 @@ import com.mygdx.game.Tools.*;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
@@ -33,20 +34,23 @@ public final class GameObject extends Sprite {
     private float memangle;
 	
 	private ArrayList<GameScript> scriptlist; 
-    
+	private ArrayList<GameScript> scriptStartlist;
+
     private GameObject parent;
     private ArrayList<GameObject> childred;
+    
+    private Vector2 spritecenter;
     
     private void setattr(String name)
     {
     	this.name = name;
         body = MyGdxGame.instance().getScreen().getWorld().createBody(bdef);
         body.setUserData(this);
+    	fixtures = new ArrayList<>();
+    	fixturetofdefs = new HashMap<>();
         if(fdefs == null)
         {
         	fdefs = new ArrayList<>();
-        	fixtures = new ArrayList<>();
-        	fixturetofdefs = new HashMap<>();
         }
         else if(fdefs.size() > 0)
         {
@@ -57,10 +61,12 @@ public final class GameObject extends Sprite {
             	if (!fixturetofdefs.containsKey(fixture))fixturetofdefs.put(fixture, fdef);
 			}
         }
+        spritecenter = new Vector2();
         memposition = new Vector2(getPosition());
         memscale = new Vector2(getScale());
         memangle = getAngle();
         scriptlist = new ArrayList<GameScript>();
+        scriptStartlist = new ArrayList<GameScript>();
         childred = new ArrayList<GameObject>();
         MyGdxGame.instance().getScreen().addGameObject(this);
     }
@@ -81,6 +87,7 @@ public final class GameObject extends Sprite {
     	parent = null;
     	childred.clear();
     	scriptlist.clear();
+    	scriptStartlist.clear();
     }
     
     public GameObject(String name, BodyDef bdef, Texture texture) 
@@ -119,13 +126,14 @@ public final class GameObject extends Sprite {
 	}
 
 
-    public void addFixture(FixtureDef fdef) 
+    public Fixture addFixture(FixtureDef fdef) 
     {
     	if (!fdefs.contains(fdef)) fdefs.add(fdef);
     	Fixture fixture = body.createFixture(fdef);
         fixture.setUserData(this);
     	if (!fixtures.contains(fixture)) fixtures.add(fixture);
     	if (!fixturetofdefs.containsKey(fixture))fixturetofdefs.put(fixture, fdef);
+    	return fixture;
 	}
     
     public void destoryFixture(int index) 
@@ -181,16 +189,16 @@ public final class GameObject extends Sprite {
 	}
     
     public GameObject getChild(String name) {
-    	for (GameObject gameObject : childred) {
-			if(gameObject.name == name) return gameObject;
+    	for (GameObject gameObject : new ArrayList<>(childred)) {
+			if(gameObject.name.equals(name)) return gameObject;
 		}
     	return null;
 	}
 
     public GameObject[] getChilds(String name) {
     	ArrayList<GameObject> scripts = new ArrayList<>();
-    	for (GameObject gameObject : childred) {
-    		if(gameObject.name == name) scripts.add(gameObject);
+    	for (GameObject gameObject : new ArrayList<>(childred)) {
+    		if(gameObject.name.equals(name)) scripts.add(gameObject);
 		}
     	GameObject[] ans = new GameObject[scripts.size()];
     	return scripts.toArray(ans);
@@ -204,7 +212,7 @@ public final class GameObject extends Sprite {
     private void updateChildPosition()
     {
     	Vector2 distance = new Vector2(getPosition().x - memposition.x, getPosition().y - memposition.y);
-    	for (GameObject child : childred) {
+    	for (GameObject child : new ArrayList<>(childred)) {
     		child.setPosition(new Vector2(child.getPosition().x + distance.x, child.getPosition().y + distance.y));
 		}
     	memposition = new Vector2(getPosition());
@@ -235,7 +243,7 @@ public final class GameObject extends Sprite {
         
     public Vector2 getPosition()
     {
-    	return body.getPosition();
+    	return new Vector2(body.getPosition());
     }
     
     public void setPosition(Vector2 position)
@@ -252,14 +260,23 @@ public final class GameObject extends Sprite {
     public void updateSpritePosition()
     {
     	super.setPosition(
-    			(getPosition().x - MyGdxGame.instance().getScreen().getCamera().position.x) * MyGdxGame.PPM * MyGdxGame.WindowsProportion + Gdx.graphics.getWidth() / 2 - getWidth() / 2, 
-    			(getPosition().y - MyGdxGame.instance().getScreen().getCamera().position.y) * MyGdxGame.PPM * MyGdxGame.WindowsProportion + Gdx.graphics.getHeight() / 2 - getHeight() / 2);
+    			(getPosition().x - MyGdxGame.instance().getScreen().getCamera().position.x) * MyGdxGame.PPM * MyGdxGame.WindowsProportion + Gdx.graphics.getWidth() / 2 - getWidth() / 2 + spritecenter.x * (1 - getLocalScale().x) * (parent != null ? parent.getScale().x : 1), 
+    			(getPosition().y - MyGdxGame.instance().getScreen().getCamera().position.y) * MyGdxGame.PPM * MyGdxGame.WindowsProportion + Gdx.graphics.getHeight() / 2 - getHeight() / 2 + spritecenter.y * (1 - getLocalScale().x) * (parent != null ? parent.getScale().y : 1));
     }
 
+    public Vector2 getSpriteCenter()
+    {
+    	return new Vector2(spritecenter);
+    }
     
+    public void setSpriteCenter(Vector2 center)
+    {
+    	spritecenter = new Vector2(center);
+    }
+
     public Vector2 getWorldPosition()
     {
-    	return body.getPosition();
+    	return new Vector2(body.getPosition());
     }
     
     public void setWorldPosition(Vector2 worldPosition)
@@ -270,7 +287,7 @@ public final class GameObject extends Sprite {
     private void updateChildScale()
     {
     	Vector2 magnification = new Vector2(getScale().x / memscale.x, getScale().y / memscale.y);
-    	for (GameObject child : childred) {
+    	for (GameObject child : new ArrayList<>(childred)) {
     		child.setScale(new Vector2(child.getScale().x * magnification.x, child.getScale().y * magnification.y));
 		}
     	memscale = new Vector2(getScale());
@@ -325,7 +342,7 @@ public final class GameObject extends Sprite {
     {
     	float AngleDistance = getAngle() - memangle;
 
-    	for (GameObject child : childred) {
+    	for (GameObject child : new ArrayList<>(childred)) {
     		Vector2 childmemlocalpostition = new Vector2(new Vector2(child.memposition).sub(memposition)).rotateDeg(-memangle);
     		
     		Vector2 childnewpostition = childmemlocalpostition.rotateDeg(getAngle()).add(new Vector2(child.getPosition()).sub(child.memposition)).sub(new Vector2(getPosition()).sub(memposition)).add(getPosition());
@@ -388,48 +405,70 @@ public final class GameObject extends Sprite {
     
     public void addscript(GameScript script) {
     	script.init(this);
-		if(!scriptlist.contains(script)) scriptlist.add(script);
+		if(!scriptStartlist.contains(script)) scriptStartlist.add(script);
+		script.Awake();
 	}
-    
+
     public void removescript(GameScript script) {
     	script.OnRemove();
 		if(scriptlist.contains(script)) scriptlist.remove(script);
+		if(scriptStartlist.contains(script)) scriptStartlist.remove(script);
 	}
     
     public GameScript getscript(int index) {
+    	if(index >= scriptlist.size()) return scriptStartlist.get(index - scriptlist.size());
     	return scriptlist.get(index);
 	}
     
     public GameScript getscript(String scriptname) {
-    	for (GameScript gameScript : scriptlist) {
-			if(gameScript.getClass().getSimpleName() == scriptname) return gameScript;
+    	for (GameScript gameScript : new ArrayList<>(scriptlist)) {
+			if(gameScript.getClass().getSimpleName().equals(scriptname)) return gameScript;
+		}
+    	for (GameScript gameScript : new ArrayList<>(scriptStartlist)) {
+			if(gameScript.getClass().getSimpleName().equals(scriptname)) return gameScript;
 		}
     	return null;
 	}
 
     public GameScript[] getscripts(String scriptname) {
     	ArrayList<GameScript> scripts = new ArrayList<>();
-    	for (GameScript gameScript : scriptlist) {
-			if(gameScript.getClass().getSimpleName() == scriptname) scripts.add(gameScript);
+    	for (GameScript gameScript : new ArrayList<>(scriptlist)) {
+			if(gameScript.getClass().getSimpleName().equals(scriptname)) scripts.add(gameScript);
+		}
+    	for (GameScript gameScript : new ArrayList<>(scriptStartlist)) {
+			if(gameScript.getClass().getSimpleName().equals(scriptname)) scripts.add(gameScript);
 		}
     	GameScript[] ans = new GameScript[scripts.size()];
     	return scripts.toArray(ans);
 	}
 
     public int getscriptSize() {
-    	return scriptlist.size();
+    	return scriptlist.size() + scriptStartlist.size();
 	}
     
     public void Update() 
     {
-    	for (GameScript gameScript : scriptlist) {
+    	for (GameScript gameScript : new ArrayList<>(scriptStartlist)) {
+			scriptStartlist.remove(gameScript);
+			scriptlist.add(gameScript);
+			gameScript.Start();
+		}
+
+    	for (GameScript gameScript : new ArrayList<>(scriptlist)) {
 			gameScript.Update();
 		}
 	}
     
+    public void OnRender(SpriteBatch batch)
+    {
+    	for (GameScript gameScript : new ArrayList<>(scriptlist)) {
+			gameScript.OnRender(batch);
+		}
+    }
+    
     public void lateUpdate()
     {
-    	for (GameScript gameScript : scriptlist) {
+    	for (GameScript gameScript : new ArrayList<>(scriptlist)) {
 			gameScript.lateUpdate();
 		}
     	if(getAngle() - memangle != 0)
@@ -449,25 +488,25 @@ public final class GameObject extends Sprite {
     public void Destroy()
     {
     	MyGdxGame.instance().getScreen().addDestoryGameObject(this);
-    	for (GameObject gameObject : childred) {
+    	for (GameObject gameObject : new ArrayList<>(childred)) {
 			gameObject.Destroy();
 		}
     }
     
     public void OnDestroy(GameObject target) {
-		for (GameScript script : scriptlist) {
+		for (GameScript script : new ArrayList<>(scriptlist)) {
 			script.OnDestory();
 		}
 		scriptlist.clear();
 	}
     
     public void OnBeginContact(Fixture me, Fixture target) {
-		for (GameScript script : scriptlist) {
+		for (GameScript script : new ArrayList<>(scriptlist)) {
 			script.OnBeginContact(me, target);
 		}
 	}
     public void OnEndContact(Fixture me, Fixture target) {
-		for (GameScript script : scriptlist) {
+		for (GameScript script : new ArrayList<>(scriptlist)) {
 			script.OnEndContact(me, target);
 		}
 	}

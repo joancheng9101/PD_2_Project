@@ -1,5 +1,6 @@
 package com.mygdx.game.objects;
 
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.Fixture;
 
@@ -9,7 +10,6 @@ public abstract class GameScript {
 	{
 		if (this.gameObject == null)
 			this.gameObject = gameObject;
-		Start();
 	}
 	
 	public GameObject getGameObject() {
@@ -20,6 +20,11 @@ public abstract class GameScript {
 		return gameObject.getBody();
 	}
 	
+	public void Awake()
+	{
+		
+	}
+
 	public void Start()
 	{
 		
@@ -30,6 +35,11 @@ public abstract class GameScript {
     	
 	}
     
+    public void OnRender(SpriteBatch batch) 
+    {
+    	
+	}
+
     public void lateUpdate()
     {
     	

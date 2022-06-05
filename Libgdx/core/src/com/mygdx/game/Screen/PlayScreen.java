@@ -1,32 +1,44 @@
 package com.mygdx.game.Screen;
 
 
-import java.util.Iterator;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.maps.MapObject;
-import com.badlogic.gdx.maps.objects.RectangleMapObject;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.maps.MapRenderer;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
-import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.CircleShape;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
-import com.badlogic.gdx.physics.box2d.World;
 import com.mygdx.game.MyGdxGame;
+import com.mygdx.game.Script.Ground;
 import com.mygdx.game.Script.Player;
 import com.mygdx.game.objects.GameObject;
 import com.mygdx.game.objects.GameScreen;
-import com.mygdx.game.objects.GameScript;
 
 public class  PlayScreen extends GameScreen {
+	private MapRenderer renderer;
     private TmxMapLoader mapLoader;
     private TiledMap map;
-    private GameObject player;    
+    
+    private Player player;    
+    private Player enemy;
+
+    private float time = 0;
+    
+    public boolean isend = false;
+    
+    BitmapFont font;
+    BitmapFont Endfont;
+
+    float rockCD = 10;
     
     final float mapwigth = 32.5f;
     
@@ -36,74 +48,106 @@ public class  PlayScreen extends GameScreen {
         mapLoader=new TmxMapLoader();
         map=mapLoader.load("mygame.tmx");
         renderer =new OrthogonalTiledMapRenderer(map, 1/MyGdxGame.PPM);
-        B2WorldCreator(getWorld(),map);
+        
+        font = new BitmapFont(Gdx.files.internal("font.fnt"),Gdx.files.internal("font.png"),false);
+        Endfont = new BitmapFont(Gdx.files.internal("font.fnt"),Gdx.files.internal("font.png"),false);
+        
+        CreateGround();
         
         BodyDef bdef = new BodyDef();
-        bdef.position.set(5f, 2);
+        bdef.position.set(4f, 1);
         bdef.type=BodyDef.BodyType.DynamicBody;
         FixtureDef fdef =new FixtureDef();
         CircleShape shape =new CircleShape();
         shape.setPosition(new Vector2(0,0));
-        shape.setRadius(20/MyGdxGame.PPM);
+        shape.setRadius(25/MyGdxGame.PPM);
         fdef.shape =shape;
         
         
-        player = new GameObject("player", bdef, new Texture("player1.png"));
+        GameObject player = new GameObject("player", bdef, new Texture("player1.png"));
+        player.setScale(new Vector2(1.2f, 1.2f));
         player.addFixture(fdef);
-        player.addscript(new Player());
         
-        bdef = new BodyDef();
-        bdef.position.set(5f, 2);
-        bdef.type=BodyDef.BodyType.StaticBody;
+        this.player = new Player();
+        
+        player.addscript(this.player);
+        this.player.keys = new int[] { Input.Keys.W, Input.Keys.S, Input.Keys.D, Input.Keys.A };
+        this.player.allowfire = true;
+        
+        bdef.position.set(6f, 1);
+        bdef.type=BodyDef.BodyType.DynamicBody;
+        shape =new CircleShape();
+        shape.setPosition(new Vector2(0,0));
+        shape.setRadius(15/MyGdxGame.PPM);
+        fdef.shape =shape;
+        
+        this.enemy = new Player();
+        GameObject enemy = new GameObject("enemy", bdef, new Texture("player2.png"));
+        enemy.addFixture(fdef);
+        enemy.addscript(this.enemy);
+        this.enemy.keys = new int[] { Input.Keys.UP, Input.Keys.DOWN, Input.Keys.RIGHT, Input.Keys.LEFT };
 
-        GameObject test = new GameObject("test", bdef, new Texture("player1.png"));
-        test.addFixture(fdef);
-        test.addscript(new GameScript()
-        {
-        	@Override
-        	public void Start()
-        	{
-        		getBody().setGravityScale(0);
-        	}
-        	@Override
-        	public void Update()
-        	{
-        	}
-        });
-        test.setParent(player);
-        test.setLocalPosition(new Vector2(-0.5f, -0.5f));
 	}
 
-    private void B2WorldCreator(World world, TiledMap map){
-        BodyDef bdef =new BodyDef();
-        PolygonShape shape =new PolygonShape();
+    private void CreateGround() 
+    {
+    	BodyDef bdef = new BodyDef();
+        bdef.position.set(5f, MyGdxGame.V_HEIGHT / MyGdxGame.PPM / 2);
+        bdef.type=BodyDef.BodyType.KinematicBody;
+
+        GameObject mainground = new GameObject("mainground", bdef);
+    	
         FixtureDef fdef = new FixtureDef();
-        Body body;
-        // ground
-        for(MapObject object : map.getLayers().get(3).getObjects().getByType(RectangleMapObject.class)){
-            Rectangle rect =((RectangleMapObject) object).getRectangle();
-            bdef.type= BodyDef.BodyType.StaticBody;
-            bdef.position.set((rect.getX()+rect.getWidth()/2)/ MyGdxGame.PPM,(rect.getY()+rect.getHeight()/2)/MyGdxGame.PPM);
-            body=world.createBody(bdef);
-            shape.setAsBox(rect.getWidth()/2/MyGdxGame.PPM, rect.getHeight()/2/MyGdxGame.PPM);
-            fdef.shape=shape;
-            body.createFixture(fdef);
-        }
-        //stone
-        for(MapObject object : map.getLayers().get(2).getObjects().getByType(RectangleMapObject.class)){
-            Rectangle rect =((RectangleMapObject) object).getRectangle();
-            bdef.type=BodyDef.BodyType.StaticBody;
-            bdef.position.set((rect.getX()+rect.getWidth()/2)/MyGdxGame.PPM,(rect.getY()+rect.getHeight()/2)/MyGdxGame.PPM);
-            body=world.createBody(bdef);
-            shape.setAsBox(rect.getWidth()/2/MyGdxGame.PPM, rect.getHeight()/2/MyGdxGame.PPM);
-            fdef.shape=shape;
-            body.createFixture(fdef);
-        }
-    }
-    
+        PolygonShape shape =new PolygonShape();
+        shape.setAsBox(0.1f, MyGdxGame.V_HEIGHT / MyGdxGame.PPM / 2);
+        fdef.shape=shape;
+        mainground.addFixture(fdef);
+    	mainground.addscript(new Ground());
+
+    	bdef = new BodyDef();
+        bdef.type=BodyDef.BodyType.StaticBody;
+
+        GameObject downground = new GameObject("downground", bdef);
+        shape =new PolygonShape();
+        shape.setAsBox(MyGdxGame.V_WIDTH / MyGdxGame.PPM / 2, 0.5f);
+        fdef.shape=shape;
+        downground.setParent(mainground);
+        downground.setLocalPosition(new Vector2(0, -(MyGdxGame.V_HEIGHT / MyGdxGame.PPM / 2) - 0.5f));
+        downground.addFixture(fdef);
+        
+        GameObject upground = new GameObject("upground", bdef);
+        upground.setParent(mainground);
+        upground.setLocalPosition(new Vector2(0, (MyGdxGame.V_HEIGHT / MyGdxGame.PPM / 2) + 0.5f));
+        upground.addFixture(fdef);
+        
+        shape =new PolygonShape();
+        shape.setAsBox(0.5f, MyGdxGame.V_HEIGHT / MyGdxGame.PPM / 2);
+        fdef.shape=shape;
+
+        GameObject rightground = new GameObject("rightground", bdef);
+        rightground.setParent(mainground);
+        rightground.setLocalPosition(new Vector2((MyGdxGame.V_WIDTH / MyGdxGame.PPM / 2) + 0.5f, 0));
+        rightground.addFixture(fdef);
+        
+        GameObject leftground = new GameObject("leftground", bdef, new Texture("rect.png"));
+        leftground.setColor(1, 0, 0, 1);
+        leftground.setSize(1 * MyGdxGame.PPM * MyGdxGame.WindowsProportion, Gdx.graphics.getHeight());
+        leftground.setParent(mainground);
+        leftground.setLocalPosition(new Vector2(-(MyGdxGame.V_WIDTH / MyGdxGame.PPM / 2) - 0.4f, 0));
+        leftground.addFixture(fdef);
+	}
+        
     @Override
     public void Update()
     {
+    	rockCD -= getdeltaTime();
+    	
+    	if(player.life > 0 && enemy.life > 0)
+    		time += getdeltaTime();
+    	else {
+			isend = true;
+		}
+    	
     	if(getCamera().position.x >= 35 || getCamera().position.x <= 2.5)
     	{
     		for (int i = 0; i < getGameObjectSize(); i++)
@@ -120,12 +164,51 @@ public class  PlayScreen extends GameScreen {
     			}
     		}
     	}
+    	
+    	if(rockCD <= 0)
+    	{
+    		
+    		rockCD = (float)(((Math.random() * 5000) + 100f) / 1000f);
+    	}
     }
     @Override
     public void lateUpdate()
     {
     	
     }
+    
+    public void name() {
+		
+	}
+    
+    
+    @Override
+    public void OnRenderMap()
+    {
+        renderer.setView((OrthographicCamera)getCamera());
+        renderer.render();
+    }
+
+    @Override
+    public void OnRender(SpriteBatch batch)
+    {
+    	String timeString = String.format("%02d", ((int)(time / 60))) + ":" + String.format("%02d", ((int)(time % 60))) + "." + String.format("%02d", ((int)((time*100) % 100)));
+    	font.setColor(1, 0, 0, 1);
+    	font.draw(batch, timeString, Gdx.graphics.getWidth() / 2 - 15 * timeString.length() / 2, Gdx.graphics.getHeight() - 10);
+    	
+    	if(player.life <= 0)
+    	{
+    		String endString = "The escapee wins!!";
+    		Endfont.setColor(1, 0, 0, 1);
+    		Endfont.draw(batch, endString, Gdx.graphics.getWidth() / 2 - 15 * endString.length() / 2, Gdx.graphics.getHeight() / 2);
+    	}
+    	else if(enemy.life <= 0) {
+    		String endString = "Hunter wins!!";
+    		Endfont.setColor(0, 1, 0, 1);
+    		Endfont.draw(batch, endString, Gdx.graphics.getWidth() / 2 - 15 * endString.length() / 2, Gdx.graphics.getHeight() / 2);
+		}
+    }
+    
     @Override
     public void render(float delta) {
     	super.render(delta);
