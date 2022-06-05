@@ -30,6 +30,11 @@ public abstract class GameScript {
     	
 	}
     
+    public void lateUpdate()
+    {
+    	
+    }
+    
     public void OnBeginContact(Fixture me, Fixture target) {
     	
 	}

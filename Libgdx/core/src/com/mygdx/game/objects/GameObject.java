@@ -2,7 +2,10 @@ package com.mygdx.game.objects;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 
+import com.mygdx.game.Tools.*;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -25,7 +28,11 @@ public final class GameObject extends Sprite {
 
 	private HashMap<Fixture, FixtureDef> fixturetofdefs;
 	
-    private ArrayList<GameScript> scriptlist; 
+    private Vector2 memposition;
+    private Vector2 memscale;
+    private float memangle;
+	
+	private ArrayList<GameScript> scriptlist; 
     
     private GameObject parent;
     private ArrayList<GameObject> childred;
@@ -50,7 +57,9 @@ public final class GameObject extends Sprite {
             	if (!fixturetofdefs.containsKey(fixture))fixturetofdefs.put(fixture, fdef);
 			}
         }
-        super.setPosition(body.getPosition().x, body.getPosition().y); 
+        memposition = new Vector2(getPosition());
+        memscale = new Vector2(getScale());
+        memangle = getAngle();
         scriptlist = new ArrayList<GameScript>();
         childred = new ArrayList<GameObject>();
         MyGdxGame.instance().getScreen().addGameObject(this);
@@ -191,6 +200,15 @@ public final class GameObject extends Sprite {
     {
     	return childred.size();
 	}
+        
+    private void updateChildPosition()
+    {
+    	Vector2 distance = new Vector2(getPosition().x - memposition.x, getPosition().y - memposition.y);
+    	for (GameObject child : childred) {
+    		child.setPosition(new Vector2(child.getPosition().x + distance.x, child.getPosition().y + distance.y));
+		}
+    	memposition = new Vector2(getPosition());
+	}
     
     public Vector2 getLocalPosition()
     {
@@ -212,9 +230,9 @@ public final class GameObject extends Sprite {
     	else {
 			body.setTransform(parent.getBody().getWorldPoint(localPosition), body.getAngle());
 		}
-    	super.setPosition(body.getPosition().x, body.getPosition().y); 
+    	updateChildPosition();
     }
-    
+        
     public Vector2 getPosition()
     {
     	return body.getPosition();
@@ -228,8 +246,16 @@ public final class GameObject extends Sprite {
     public void setPosition(float x, float y)
     {
     	body.setTransform(new Vector2(x, y), body.getAngle());
-    	super.setPosition(body.getPosition().x, body.getPosition().y); 
+    	updateChildPosition();
     }
+    
+    public void updateSpritePosition()
+    {
+    	super.setPosition(
+    			(getPosition().x - MyGdxGame.instance().getScreen().getCamera().position.x) * MyGdxGame.PPM * MyGdxGame.WindowsProportion + Gdx.graphics.getWidth() / 2 - getWidth() / 2, 
+    			(getPosition().y - MyGdxGame.instance().getScreen().getCamera().position.y) * MyGdxGame.PPM * MyGdxGame.WindowsProportion + Gdx.graphics.getHeight() / 2 - getHeight() / 2);
+    }
+
     
     public Vector2 getWorldPosition()
     {
@@ -240,6 +266,15 @@ public final class GameObject extends Sprite {
     {
     	setPosition(worldPosition); 
     }
+    
+    private void updateChildScale()
+    {
+    	Vector2 magnification = new Vector2(getScale().x / memscale.x, getScale().y / memscale.y);
+    	for (GameObject child : childred) {
+    		child.setScale(new Vector2(child.getScale().x * magnification.x, child.getScale().y * magnification.y));
+		}
+    	memscale = new Vector2(getScale());
+	}
     
     public Vector2 getLocalScale() 
     {
@@ -261,6 +296,7 @@ public final class GameObject extends Sprite {
     	else {
     		setScale(localScale.x * parent.getScaleX(), localScale.y * parent.getScaleY());
 		}
+    	updateChildScale();
     }
     
     public Vector2 getScale() 
@@ -271,6 +307,7 @@ public final class GameObject extends Sprite {
     public void setScale(Vector2 scale) 
     {
     	super.setScale(scale.x, scale.y);
+    	updateChildScale();
 	}
 
     public Vector2 getWorldScale() 
@@ -281,8 +318,74 @@ public final class GameObject extends Sprite {
     public void setWorldScale(Vector2 worldScale) 
     {
     	super.setScale(worldScale.x, worldScale.y);
+    	updateChildScale();
+	}
+    
+    private void updateChildAngle()
+    {
+    	float AngleDistance = getAngle() - memangle;
+
+    	for (GameObject child : childred) {
+    		Vector2 childmemlocalpostition = new Vector2(new Vector2(child.memposition).sub(memposition)).rotateDeg(-memangle);
+    		
+    		Vector2 childnewpostition = childmemlocalpostition.rotateDeg(getAngle()).add(new Vector2(child.getPosition()).sub(child.memposition)).sub(new Vector2(getPosition()).sub(memposition)).add(getPosition());
+    		child.setPosition(childnewpostition);
+    		child.setAngle(child.getAngle() + AngleDistance);
+		}
+    	memangle = getAngle();
+	}
+    
+    public float getLocalAngle()
+    {
+    	if(parent == null)
+    	{
+    		return MathTool.radiansTodegrees(body.getAngle());
+    	}
+    	else {
+			return MathTool.radiansTodegrees(body.getAngle() - parent.body.getAngle());
+		}
+	}
+    
+    public void setLocalAngle(float localAngle)
+    {
+    	localAngle = MathTool.degreesToradians(localAngle);
+    	if(parent == null)
+    	{
+    		body.setTransform(getPosition(), localAngle);
+    	}
+    	else {
+    		body.setTransform(getPosition(), localAngle + parent.body.getAngle());
+		}
+		setRotation(MathTool.radiansTodegrees(body.getAngle()));
+    	updateChildAngle();
+    }
+    
+    public float getAngle()
+    {
+    	return MathTool.radiansTodegrees(body.getAngle());
+	}
+    
+    public void setAngle(float angle) 
+    {
+    	angle = MathTool.degreesToradians(angle);
+		body.setTransform(getPosition(), angle);
+		setRotation(MathTool.radiansTodegrees(body.getAngle()));
+    	updateChildAngle();
 	}
 
+    public float getWorldAngle() 
+    {
+    	return body.getAngle();
+	}
+    
+    public void setWorldAngle(float worldAngle) 
+    {
+    	worldAngle = MathTool.degreesToradians(worldAngle);
+		body.setTransform(getPosition(), worldAngle);
+		setRotation(MathTool.radiansTodegrees(body.getAngle()));
+    	updateChildAngle();
+	}
+    
     public void addscript(GameScript script) {
     	script.init(this);
 		if(!scriptlist.contains(script)) scriptlist.add(script);
@@ -323,6 +426,25 @@ public final class GameObject extends Sprite {
 			gameScript.Update();
 		}
 	}
+    
+    public void lateUpdate()
+    {
+    	for (GameScript gameScript : scriptlist) {
+			gameScript.lateUpdate();
+		}
+    	if(getAngle() - memangle != 0)
+    	{
+    		updateChildAngle();
+    	}
+    	if(getPosition().x - memposition.x != 0 || getPosition().y - memposition.y != 0)
+    	{
+    		updateChildPosition();
+    	}
+    	if(getScale().x / memscale.x != 1 || getScale().y / memscale.y != 1)
+    	{
+    		updateChildScale();
+    	}
+    }
     
     public void Destroy()
     {
