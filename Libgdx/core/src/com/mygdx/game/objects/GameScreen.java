@@ -66,16 +66,22 @@ public abstract class GameScreen implements Screen {
             public void beginContact(Contact contact) {
             	Fixture A = contact.getFixtureA();
             	Fixture B = contact.getFixtureB();
-                if(A.getUserData() != null) ((GameObject)A.getUserData()).OnBeginContact(A, B);
-                if(B.getUserData() != null) ((GameObject)B.getUserData()).OnBeginContact(B, A);
+            	if(A.getUserData() != B.getUserData())
+            	{
+	                if(A.getUserData() != null) ((GameObject)A.getUserData()).OnBeginContact(A, B);
+	                if(B.getUserData() != null) ((GameObject)B.getUserData()).OnBeginContact(B, A);
+            	}
             }
 
             @Override
             public void endContact(Contact contact) {
             	Fixture A = contact.getFixtureA();
             	Fixture B = contact.getFixtureB();
-            	if(A.getUserData() != null) ((GameObject)A.getUserData()).OnEndContact(A, B);;
-            	if(B.getUserData() != null) ((GameObject)B.getUserData()).OnEndContact(B, A);;
+            	if(A.getUserData() != B.getUserData())
+            	{
+	            	if(A.getUserData() != null) ((GameObject)A.getUserData()).OnEndContact(A, B);
+	            	if(B.getUserData() != null) ((GameObject)B.getUserData()).OnEndContact(B, A);
+            	}
             }
 
             @Override
@@ -121,6 +127,11 @@ public abstract class GameScreen implements Screen {
     	{
     		destroyobjectlist.add(gameObject);
     	}
+    }
+    
+    public boolean DestoryGameObjectCheck(GameObject gameObject)
+    {
+    	return !destroyobjectlist.contains(gameObject);
     }
     
     public float getdeltaTime() 
@@ -173,17 +184,22 @@ public abstract class GameScreen implements Screen {
         for (GameObject gameObject : new ArrayList<>(destroyobjectlist)) 
     	{
     		gameObject.getTexture().dispose();
-    		for(int i = 0; i < gameObject.getFixtureSize(); i++)
+    		while(gameObject.getFixtureSize() > 0)
     		{
-    			gameObject.destoryFixture(i);
+    			gameObject.destoryFixture(0);
     		}
     		world.destroyBody(gameObject.getBody());
+    		while(gameObject.getSlaveBodySize() > 0)
+    		{
+    			gameObject.destorySlaveBody(0);
+    		}
+    		
         	if(objectlist.contains(gameObject))
         	{
         		objectlist.remove(gameObject);
         	}
+        	destroyobjectlist.remove(gameObject);
 		}
-        destroyobjectlist.clear();
         
         gamecam.update();
     }

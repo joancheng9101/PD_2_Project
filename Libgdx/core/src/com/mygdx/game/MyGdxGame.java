@@ -23,7 +23,7 @@ public class MyGdxGame extends Game {
 	public void create() {
 		_instance = this;
 		setScreen(new PlayScreen());
-		getScreen().Debugmode(true);
+		//getScreen().Debugmode(true);
 		getScreen().Start();
 	}
 	@Override

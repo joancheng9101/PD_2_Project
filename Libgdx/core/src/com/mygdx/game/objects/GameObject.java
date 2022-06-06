@@ -17,17 +17,22 @@ import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 
 import com.mygdx.game.MyGdxGame;
+import com.mygdx.game.Script.AddBulletSpeed;
 
 public final class GameObject extends Sprite {
 	public String name = "";
 	
 	private Body body;
+	private ArrayList<Body> slavebody;
+
 	private ArrayList<Fixture> fixtures;
 
 	private BodyDef bdef;
 	private ArrayList<FixtureDef> fdefs;
 
 	private HashMap<Fixture, FixtureDef> fixturetofdefs;
+	private HashMap<Fixture, Body> fixturetoslavebody;
+
 	
     private Vector2 memposition;
     private Vector2 memscale;
@@ -65,6 +70,8 @@ public final class GameObject extends Sprite {
         memposition = new Vector2(getPosition());
         memscale = new Vector2(getScale());
         memangle = getAngle();
+        slavebody = new ArrayList<>();
+        fixturetoslavebody = new HashMap<Fixture, Body>();
         scriptlist = new ArrayList<GameScript>();
         scriptStartlist = new ArrayList<GameScript>();
         childred = new ArrayList<GameObject>();
@@ -136,6 +143,32 @@ public final class GameObject extends Sprite {
     	return fixture;
 	}
     
+    public Fixture addFixture(FixtureDef fdef, int slavebodyindex) 
+    {
+    	if (!fdefs.contains(fdef)) fdefs.add(fdef);
+    	Fixture fixture = slavebody.get(slavebodyindex).createFixture(fdef);
+        fixture.setUserData(this);
+    	if (!fixtures.contains(fixture)) fixtures.add(fixture);
+    	if (!fixturetofdefs.containsKey(fixture))fixturetofdefs.put(fixture, fdef);
+    	if (!fixturetoslavebody.containsKey(fixture))fixturetoslavebody.put(fixture, slavebody.get(slavebodyindex));
+    	return fixture;
+	}
+
+    public Fixture addFixture(FixtureDef fdef, Body aslavebody) 
+    {
+    	if(slavebody.contains(aslavebody))
+    	{
+			if (!fdefs.contains(fdef)) fdefs.add(fdef);
+			Fixture fixture = aslavebody.createFixture(fdef);
+		    fixture.setUserData(this);
+			if (!fixtures.contains(fixture)) fixtures.add(fixture);
+			if (!fixturetofdefs.containsKey(fixture))fixturetofdefs.put(fixture, fdef);
+			if (!fixturetoslavebody.containsKey(fixture))fixturetoslavebody.put(fixture, aslavebody);
+			return fixture;
+    	}
+    	return null;
+	}
+    
     public void destoryFixture(int index) 
     {
     	destoryFixture(fixtures.get(index));
@@ -145,7 +178,15 @@ public final class GameObject extends Sprite {
     {
     	FixtureDef fdef = fixturetofdefs.get(fixture);
     	
-    	body.destroyFixture(fixture);
+    	if(fixturetoslavebody.containsKey(fixture))
+    	{
+    		fixturetoslavebody.get(fixture).destroyFixture(fixture);
+    		fixturetoslavebody.remove(fixture);
+    	}
+    	else 
+    	{
+        	body.destroyFixture(fixture);
+		}
 	    if(fdefs.contains(fdef)) fdefs.remove(fdef);
 	    if(fixtures.contains(fixture)) fixtures.remove(fixture);
 	    if(fixturetofdefs.containsKey(fixture)) fixturetofdefs.remove(fixture);
@@ -159,6 +200,41 @@ public final class GameObject extends Sprite {
     public int getFixtureSize() 
     {
         return fixtures.size();
+	}
+    
+    public Body addSlaveBody(BodyDef bdef) 
+    {
+    	//if (!fdefs.contains(fdef)) fdefs.add(fdef);
+    	Body body = MyGdxGame.instance().getScreen().getWorld().createBody(bdef);
+        body.setUserData(this);
+        body.setTransform(getPosition(), getAngle());
+    	if (!slavebody.contains(body)) slavebody.add(body);
+    	//if (!fixturetofdefs.containsKey(fixture))fixturetofdefs.put(fixture, fdef);
+    	return body;
+	}
+    
+    public void destorySlaveBody(int index) 
+    {
+    	destorySlaveBody(slavebody.get(index));
+    }
+
+    public void destorySlaveBody(Body body) 
+    {
+	    if(slavebody.contains(body))
+	    {
+	    	slavebody.remove(body);
+	    	MyGdxGame.instance().getScreen().getWorld().destroyBody(body);
+	    }
+    }
+    
+    public Body getSlaveBody(int index) 
+    {
+        return slavebody.get(index);
+	}
+
+    public int getSlaveBodySize() 
+    {
+        return slavebody.size();
 	}
     
     public Body getBody() {
@@ -177,7 +253,7 @@ public final class GameObject extends Sprite {
     	}
     	this.parent = parent;
 	}
-    
+        
     public GameObject getParent() 
     {
     	return parent;
@@ -483,14 +559,20 @@ public final class GameObject extends Sprite {
     	{
     		updateChildScale();
     	}
+    	for (Body nowslavebody : slavebody) {
+			nowslavebody.setTransform(getPosition(), getAngle());
+		}
     }
     
     public void Destroy()
     {
-    	MyGdxGame.instance().getScreen().addDestoryGameObject(this);
-    	for (GameObject gameObject : new ArrayList<>(childred)) {
-			gameObject.Destroy();
-		}
+    	if (MyGdxGame.instance().getScreen().DestoryGameObjectCheck(this))
+    	{
+	    	MyGdxGame.instance().getScreen().addDestoryGameObject(this);
+	    	for (GameObject gameObject : new ArrayList<>(childred)) {
+				gameObject.Destroy();
+			}
+    	}
     }
     
     public void OnDestroy(GameObject target) {

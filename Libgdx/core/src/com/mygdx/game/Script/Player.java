@@ -32,6 +32,9 @@ public class Player extends GameScript
 	public final float bulletCDMAX = 0.2f;
 	public float bulletCD = 0;
 	
+	public float speeduptimeMAX = 2.5f;
+	public float speeduptime = 0;
+	
 	public final float bulletSpeed = 10;
 	
 	@Override
@@ -56,10 +59,13 @@ public class Player extends GameScript
 	public void Update()
 	{
 		bulletCD -= nowScreen.getdeltaTime();
-		
+		if(speeduptime >= 0)
+		{
+			speeduptime -= nowScreen.getdeltaTime();
+		}
 		lifeline.slide = life/MAXlife;
 		
-		if (!((PlayScreen)nowScreen).isend)
+		if (((PlayScreen)nowScreen).isend == 0)
 			handleInput();
 		getBody().setLinearVelocity(new Vector2(10 + velocity.x , velocity.y));
 	}
@@ -91,7 +97,7 @@ public class Player extends GameScript
         {
 		    makbullete(new Vector2(getGameObject().getPosition().x, getGameObject().getPosition().y + 0.25f));
 		    makbullete(new Vector2(getGameObject().getPosition().x, getGameObject().getPosition().y - 0.25f));
-		    bulletCD = bulletCDMAX;
+		    bulletCD = bulletCDMAX / (speeduptime > 0 ? 3 : 1);
         }
     }
     
@@ -100,7 +106,7 @@ public class Player extends GameScript
 	    BodyDef bdef = new BodyDef();
 	    bdef.type=BodyDef.BodyType.DynamicBody;
 
-	    GameObject bullet = new GameObject("bullet", bdef, new Texture("rect.png")); 
+	    GameObject bullet = new GameObject("bullet", bdef, new Texture("assets/rect.png")); 
 	    bullet.setColor(1, 0, 0, 1);
 	    bullet.setPosition(position);
 	    bullet.setScale(new Vector2(0.25f, 0.25f));;
@@ -130,6 +136,11 @@ public class Player extends GameScript
     	else if (targetobject.name == "leftground") 
     	{
 			life = 0;
+		}
+    	else if (targetobject.name == "addBulletSpeed") 
+    	{
+    		if(speeduptime < 0) speeduptime = 0;
+			speeduptime += speeduptimeMAX;
 		}
 	}
 }

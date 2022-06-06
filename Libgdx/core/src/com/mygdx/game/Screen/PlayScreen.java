@@ -18,6 +18,7 @@ import com.badlogic.gdx.physics.box2d.CircleShape;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.mygdx.game.MyGdxGame;
+import com.mygdx.game.Script.Bullet;
 import com.mygdx.game.Script.Ground;
 import com.mygdx.game.Script.Player;
 import com.mygdx.game.objects.GameObject;
@@ -32,25 +33,27 @@ public class  PlayScreen extends GameScreen {
     private Player enemy;
 
     private float time = 0;
-    
-    public boolean isend = false;
+
+    public final short grouprock = -1;
+    public final short categoryprock = 0x2;
+    public final short categorypenemy = 0x4;
+
+    public int isend = 0;
     
     BitmapFont font;
     BitmapFont Endfont;
 
-    float rockCD = 10;
-    
     final float mapwigth = 32.5f;
     
     @Override
     public void Start() 
     {
         mapLoader=new TmxMapLoader();
-        map=mapLoader.load("mygame.tmx");
+        map=mapLoader.load("assets/mygame.tmx");
         renderer =new OrthogonalTiledMapRenderer(map, 1/MyGdxGame.PPM);
         
-        font = new BitmapFont(Gdx.files.internal("font.fnt"),Gdx.files.internal("font.png"),false);
-        Endfont = new BitmapFont(Gdx.files.internal("font.fnt"),Gdx.files.internal("font.png"),false);
+        font = new BitmapFont(Gdx.files.internal("assets/font.fnt"),Gdx.files.internal("assets/font.png"),false);
+        Endfont = new BitmapFont(Gdx.files.internal("assets/font.fnt"),Gdx.files.internal("assets/font.png"),false);
         
         CreateGround();
         
@@ -64,7 +67,7 @@ public class  PlayScreen extends GameScreen {
         fdef.shape =shape;
         
         
-        GameObject player = new GameObject("player", bdef, new Texture("player1.png"));
+        GameObject player = new GameObject("player", bdef, new Texture("assets/player1.png"));
         player.setScale(new Vector2(1.2f, 1.2f));
         player.addFixture(fdef);
         
@@ -82,7 +85,9 @@ public class  PlayScreen extends GameScreen {
         fdef.shape =shape;
         
         this.enemy = new Player();
-        GameObject enemy = new GameObject("enemy", bdef, new Texture("player2.png"));
+        GameObject enemy = new GameObject("enemy", bdef, new Texture("assets/player2.png"));
+        fdef.filter.categoryBits = categorypenemy;
+        fdef.filter.maskBits = ~categoryprock;
         enemy.addFixture(fdef);
         enemy.addscript(this.enemy);
         this.enemy.keys = new int[] { Input.Keys.UP, Input.Keys.DOWN, Input.Keys.RIGHT, Input.Keys.LEFT };
@@ -98,6 +103,7 @@ public class  PlayScreen extends GameScreen {
         GameObject mainground = new GameObject("mainground", bdef);
     	
         FixtureDef fdef = new FixtureDef();
+        fdef.filter.groupIndex = grouprock;
         PolygonShape shape =new PolygonShape();
         shape.setAsBox(0.1f, MyGdxGame.V_HEIGHT / MyGdxGame.PPM / 2);
         fdef.shape=shape;
@@ -108,6 +114,7 @@ public class  PlayScreen extends GameScreen {
         bdef.type=BodyDef.BodyType.StaticBody;
 
         GameObject downground = new GameObject("downground", bdef);
+        fdef.filter.groupIndex = grouprock;
         shape =new PolygonShape();
         shape.setAsBox(MyGdxGame.V_WIDTH / MyGdxGame.PPM / 2, 0.5f);
         fdef.shape=shape;
@@ -116,6 +123,7 @@ public class  PlayScreen extends GameScreen {
         downground.addFixture(fdef);
         
         GameObject upground = new GameObject("upground", bdef);
+        fdef.filter.groupIndex = grouprock;
         upground.setParent(mainground);
         upground.setLocalPosition(new Vector2(0, (MyGdxGame.V_HEIGHT / MyGdxGame.PPM / 2) + 0.5f));
         upground.addFixture(fdef);
@@ -125,11 +133,13 @@ public class  PlayScreen extends GameScreen {
         fdef.shape=shape;
 
         GameObject rightground = new GameObject("rightground", bdef);
+        fdef.filter.groupIndex = grouprock;
         rightground.setParent(mainground);
         rightground.setLocalPosition(new Vector2((MyGdxGame.V_WIDTH / MyGdxGame.PPM / 2) + 0.5f, 0));
         rightground.addFixture(fdef);
         
-        GameObject leftground = new GameObject("leftground", bdef, new Texture("rect.png"));
+        GameObject leftground = new GameObject("leftground", bdef, new Texture("assets/rect.png"));
+        fdef.filter.groupIndex = 0;
         leftground.setColor(1, 0, 0, 1);
         leftground.setSize(1 * MyGdxGame.PPM * MyGdxGame.WindowsProportion, Gdx.graphics.getHeight());
         leftground.setParent(mainground);
@@ -140,12 +150,9 @@ public class  PlayScreen extends GameScreen {
     @Override
     public void Update()
     {
-    	rockCD -= getdeltaTime();
-    	
-    	if(player.life > 0 && enemy.life > 0)
+    	if(isend == 0)
+    	{
     		time += getdeltaTime();
-    	else {
-			isend = true;
 		}
     	
     	if(getCamera().position.x >= 35 || getCamera().position.x <= 2.5)
@@ -164,23 +171,12 @@ public class  PlayScreen extends GameScreen {
     			}
     		}
     	}
-    	
-    	if(rockCD <= 0)
-    	{
-    		
-    		rockCD = (float)(((Math.random() * 5000) + 100f) / 1000f);
-    	}
     }
     @Override
     public void lateUpdate()
     {
     	
-    }
-    
-    public void name() {
-		
-	}
-    
+    }    
     
     @Override
     public void OnRenderMap()
@@ -196,13 +192,23 @@ public class  PlayScreen extends GameScreen {
     	font.setColor(1, 0, 0, 1);
     	font.draw(batch, timeString, Gdx.graphics.getWidth() / 2 - 15 * timeString.length() / 2, Gdx.graphics.getHeight() - 10);
     	
-    	if(player.life <= 0)
+    	if(isend == 0)
+    	{
+	    	if(player.life <= 0)
+	    	{
+	    		isend = -1;
+	    	}
+	    	else if(enemy.life <= 0) {
+	    		isend = 1;
+			}
+    	}
+    	if(isend == -1)
     	{
     		String endString = "The escapee wins!!";
     		Endfont.setColor(1, 0, 0, 1);
     		Endfont.draw(batch, endString, Gdx.graphics.getWidth() / 2 - 15 * endString.length() / 2, Gdx.graphics.getHeight() / 2);
     	}
-    	else if(enemy.life <= 0) {
+    	else if(isend == 1) {
     		String endString = "Hunter wins!!";
     		Endfont.setColor(0, 1, 0, 1);
     		Endfont.draw(batch, endString, Gdx.graphics.getWidth() / 2 - 15 * endString.length() / 2, Gdx.graphics.getHeight() / 2);

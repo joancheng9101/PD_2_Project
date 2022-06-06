@@ -18,7 +18,7 @@ public class Slider extends GameScript {
 	    BodyDef bdef = new BodyDef();
 	    bdef.type=BodyDef.BodyType.StaticBody;
 
-	    line = new GameObject("line", bdef, new Texture("rect.png"));
+	    line = new GameObject("line", bdef, new Texture("assets/rect.png"));
 	    line.setParent(getGameObject());
 	    line.setScale(new Vector2(slide,1));
 	    line.setPosition(new Vector2(0, 0));
