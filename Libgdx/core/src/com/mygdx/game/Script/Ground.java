@@ -17,9 +17,9 @@ import com.mygdx.game.objects.GameScript;
 
 public class Ground extends GameScript 
 {
-	GameObject allObject;
-	GameScreen nowScreen = MyGdxGame.instance().getScreen();
-    float rockCD = 3;
+	public GameObject allObject;
+	private final GameScreen nowScreen = MyGdxGame.instance().getScreen();
+	private float rockCD = 5;
     
 	public void Start() {
 	    BodyDef bdef = new BodyDef();
@@ -76,7 +76,7 @@ public class Ground extends GameScript
 	    fdef.isSensor = true;
 	    rock.addFixture(fdef, slaveBody);
 	    rock.addscript(new Rock());
-	    rock.getBody().setLinearVelocity(new Vector2(10-(float)((Math.random() * 4f) + 1f), 0));
+	    rock.getBody().setLinearVelocity(new Vector2(10-(float)((Math.random() * 3f) + 1f), 0));
 	}
 	
     public void makeAddBulletSpeed()

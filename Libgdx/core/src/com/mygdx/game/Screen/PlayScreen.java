@@ -40,8 +40,8 @@ public class  PlayScreen extends GameScreen {
 
     public int isend = 0;
     
-    BitmapFont font;
-    BitmapFont Endfont;
+    private BitmapFont font;
+    private BitmapFont Endfont;
 
     final float mapwigth = 32.5f;
     
@@ -148,7 +148,7 @@ public class  PlayScreen extends GameScreen {
 	}
         
     @Override
-    public void Update()
+    protected void Update()
     {
     	if(isend == 0)
     	{
@@ -173,20 +173,20 @@ public class  PlayScreen extends GameScreen {
     	}
     }
     @Override
-    public void lateUpdate()
+    protected void lateUpdate()
     {
     	
     }    
     
     @Override
-    public void OnRenderMap()
+    protected void OnRenderMap()
     {
         renderer.setView((OrthographicCamera)getCamera());
         renderer.render();
     }
 
     @Override
-    public void OnRender(SpriteBatch batch)
+    protected void OnRender(SpriteBatch batch)
     {
     	String timeString = String.format("%02d", ((int)(time / 60))) + ":" + String.format("%02d", ((int)(time % 60))) + "." + String.format("%02d", ((int)((time*100) % 100)));
     	font.setColor(1, 0, 0, 1);

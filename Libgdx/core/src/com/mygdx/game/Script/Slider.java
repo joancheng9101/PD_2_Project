@@ -10,7 +10,7 @@ import com.mygdx.game.objects.GameObject;
 import com.mygdx.game.objects.GameScript;
 
 public class Slider extends GameScript {
-	GameObject line;
+	private GameObject line;
 	
 	public float slide = 1;
 	
@@ -30,11 +30,6 @@ public class Slider extends GameScript {
 	public void setlinecolor(Color color)
 	{
 		line.setColor(color);
-	}
-	
-	public Vector2 getlineSpriteCenter()
-	{
-		return new Vector2(line.getSpriteCenter());
 	}
 	
 	public void Update() 

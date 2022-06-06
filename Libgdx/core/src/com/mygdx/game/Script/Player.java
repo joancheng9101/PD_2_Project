@@ -18,8 +18,8 @@ import com.mygdx.game.objects.GameScript;
 
 public class Player extends GameScript 
 {
-	GameScreen nowScreen = MyGdxGame.instance().getScreen();
-	Vector2 velocity = new Vector2();
+	private final GameScreen nowScreen = MyGdxGame.instance().getScreen();
+	private Vector2 velocity = new Vector2();
 	
 	public int[] keys = new int[] { Input.Keys.UP, Input.Keys.DOWN, Input.Keys.RIGHT, Input.Keys.LEFT };
 	public boolean allowfire = false;
@@ -32,7 +32,7 @@ public class Player extends GameScript
 	public final float bulletCDMAX = 0.2f;
 	public float bulletCD = 0;
 	
-	public float speeduptimeMAX = 2.5f;
+	public final float speeduptimeMAX = 2.5f;
 	public float speeduptime = 0;
 	
 	public final float bulletSpeed = 10;

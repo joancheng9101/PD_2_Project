@@ -163,13 +163,13 @@ public abstract class GameScreen implements Screen {
     	return scripts.toArray(ans);
 	}
     
-    public void Update(){
+    protected void Update(){
     	
     }
-    public void lateUpdate(){
+    protected void lateUpdate(){
     	
     }
-    public void update(){
+    private void update(){
     	for (GameObject gameObject : new ArrayList<>(objectlist)) 
     	{
     		gameObject.Update();
@@ -204,12 +204,12 @@ public abstract class GameScreen implements Screen {
         gamecam.update();
     }
     
-    public void OnRenderMap()
+    protected void OnRenderMap()
     {
     	
     }
 
-    public void OnRender(SpriteBatch batch)
+    protected void OnRender(SpriteBatch batch)
     {
     	
     }
