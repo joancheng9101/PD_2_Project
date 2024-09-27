@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.8" tiledversion="1.8.5" orientation="orthogonal" renderorder="right-down" width="240" height="13" tilewidth="16" tileheight="16" infinite="0" nextlayerid="7" nextobjectid="72">
+ <tileset firstgid="1" source="DS DSi - Jump Super Stars - Stage 08.tsx"/>
+ <tileset firstgid="815" source="DS DSi - Jump Super Stars - Stage 12.tsx"/>
+ <tileset firstgid="1772" source="87571252-verschiedene-formen-des-steins-mit-moosillustration-removebg-preview.tsx"/>
+ <layer id="1" name="background" width="240" height="13">
+  <data encoding="base64" compression="zlib">
+   eJztmU0OAjEIhTtzBP/OYLz/nbyEWmviYmJspQIFmrf4FhpTHjwoTbwtKd0L1w3547M0D+XzJfRp18CC/ZrSoXAsnFZ7Pb88sNbgXe+3mHlp9++O6fu2hzzWblSPa/stdb5FX3I8iKaXG/P85vVdJmipza903ajnUWunuVN7c5fwuxWTcj5FM+ZoHJbvDemdKu2Dxs7naL0Qf1fzlFsf7T7vuVOlY3OJfu+09Huqt9W+j+ipRzzm51GTlP5/c6PMhcX705Nv3u4Oz3qj1SoylLmwnp0eOL2j9RaW1inhqdfYs7/ZQB1O74zs+Uj3YRT/UGcQBeudYh0feYGoaO0U6f8CozFrXmB+0LsAAAAAmI0nW3+KZQ==
+  </data>
+ </layer>
+</map>
